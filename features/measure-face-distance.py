@@ -79,7 +79,7 @@ video_path = "./img/sample1.mp4"
 ts1 = time.time()
 cap = cv2.VideoCapture(video_path)
 fps = cap.get(cv2.CAP_PROP_FPS)
-fourcc = cv2.VideoWriter.fourcc('D', 'I', 'V', 'X')
+fourcc = cv2.VideoWriter.fourcc("D", "I", "V", "X")
 # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 output_path = "./out.mp4"
