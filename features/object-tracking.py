@@ -4,6 +4,9 @@ import sys
 from queue import Queue
 
 GREEN = (0, 255, 0)
+WIDTH = 640
+HEIGHT = 360
+SIZE = (WIDTH, HEIGHT)
 
 
 def select_roi_manually(
@@ -11,7 +14,7 @@ def select_roi_manually(
     lst: list[cv2.typing.Rect],
     color_list: list[tuple[int, int, int]],
 ) -> None:
-    frame = cv2.resize(frame, (360, 640))
+    frame = cv2.resize(frame, SIZE)
     while True:
         box: cv2.typing.Rect = cv2.selectROI("object-tracking", frame)
         if box[0] == 0:
@@ -34,7 +37,7 @@ def select_roi(
     else:
         hog = cv2.HOGDescriptor((48, 96), (16, 16), (8, 8), (8, 8), 9)
         hog.setSVMDetector(cv2.HOGDescriptor_getDaimlerPeopleDetector())
-    frame = cv2.resize(frame, (640, 480))
+    frame = cv2.resize(frame, SIZE)
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     found_list, _ = hog.detectMultiScale(frame)
     for obj in found_list:
@@ -66,6 +69,9 @@ size_sum: list[int] = []
 size_list: list[Queue[int]] = []
 
 # select_roi(frame, boxes, colors, False)
+fourcc = cv2.VideoWriter.fourcc(*"DIVX")
+out = cv2.VideoWriter("output.avi", fourcc, fps, SIZE)
+
 select_roi_manually(frame, boxes, colors)
 
 multi_tracker = cv2.legacy.MultiTracker.create()
@@ -79,7 +85,7 @@ while cap.isOpened():
     success, frame = cap.read()
     if not success:
         break
-    frame = cv2.resize(frame, (360, 640))
+    frame = cv2.resize(frame, SIZE)
     success, boxes = multi_tracker.update(frame)
     for i, box in enumerate(boxes):
         p1 = (int(box[0]), int(box[1]))
@@ -106,7 +112,7 @@ while cap.isOpened():
         if size_list[i].qsize() > 10:
             size_sum[i] -= size_list[i].get()
         size_sum[i] += size
-        if size > 900 and size > size_sum[i] / size_list[i].qsize():
+        if size > 900 and size > (size_sum[i] / size_list[i].qsize() + 1500):
             cv2.putText(
                 frame,
                 "Approaching",
@@ -117,8 +123,10 @@ while cap.isOpened():
             )
 
     cv2.imshow("tracker", frame)
+    out.write(frame)
     if cv2.waitKey(int(1000 / fps)) == ord("q"):
         break
 
+out.release()
 cap.release()
 cv2.destroyAllWindows()
